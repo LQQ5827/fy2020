@@ -6,6 +6,7 @@ import com.neuedu.business.common.Consts;
 import com.neuedu.business.common.ServerResponse;
 import com.neuedu.business.common.StatusEnum;
 import com.neuedu.business.dao.ProductMapper;
+import com.neuedu.business.exception.BusinessException;
 import com.neuedu.business.pojo.Product;
 import com.neuedu.business.service.ICategoryService;
 import com.neuedu.business.service.IProductService;
@@ -15,6 +16,8 @@ import com.neuedu.business.vo.ProductListVO;
 import com.sun.javafx.beans.IDProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -159,6 +162,37 @@ public class ProductServiceImpl implements IProductService {
         ProductDetailVO productDetailVO=product2vo(product);
         return ServerResponse.serverResponseBySuccess(null,productDetailVO);
 
+    }
+
+    /**
+     * 商品扣库存实现
+     * @param productId
+     * @param quantity
+     * @param type
+     * @return
+     */
+    @Transactional(propagation = Propagation.SUPPORTS)
+    @Override
+    public ServerResponse updateStock(Integer productId, Integer quantity, int type) {
+        if(productId==null||quantity==null){
+            return ServerResponse.serverResponseByFail(StatusEnum.PARAM_NOT_EMPTY.getStatus(),StatusEnum.PARAM_NOT_EMPTY.getDesc());
+        }
+
+        //更新库存
+        Product product=productMapper.selectByPrimaryKey(productId);
+        if(product==null){
+            return ServerResponse.serverResponseByFail(StatusEnum.PRODUCT_NOT_EXISTS.getStatus(),StatusEnum.PRODUCT_NOT_EXISTS.getDesc());
+        }
+        int count=productMapper.reduceStock(productId,type==0?product.getStock()-quantity:product.getStock()+quantity);
+
+//System.out.println(1/0);
+
+      if(count<=0){
+           throw new BusinessException(StatusEnum.REDUCE_STOCK_FAIL.getStatus(),StatusEnum.REDUCE_STOCK_FAIL.getDesc());
+       }
+
+
+        return ServerResponse.serverResponseBySuccess();
     }
 
     private ProductDetailVO product2vo(Product product){

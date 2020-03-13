@@ -1,6 +1,9 @@
 package com.neuedu.business.service;
 
 import com.neuedu.business.common.ServerResponse;
+import com.neuedu.business.pojo.Cart;
+
+import java.util.List;
 
 public interface ICartService {
     /**
@@ -12,4 +15,16 @@ public interface ICartService {
      * */
 
     ServerResponse add(Integer userId,Integer productId,Integer count);
+
+    /**
+     * 查询购物车中用户已经选中的商品
+     * */
+    ServerResponse findCartByUserIdAndChecked(Integer userId);
+
+    /**
+     *
+     * 批量删除购物车商品
+     * */
+
+    ServerResponse deleteBatchByIds(List<Cart> cartList);
 }

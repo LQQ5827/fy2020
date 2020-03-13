@@ -47,6 +47,11 @@ public interface ProductMapper {
      */
     int updateByPrimaryKey(Product record);
 
+    /**
+     * 更新商品信息，只更新非空字段
+     * @param product
+     * @return
+     */
     int updateProductByActive(@Param("product") Product product);
 
     /**
@@ -57,4 +62,8 @@ public interface ProductMapper {
     List<Product>  findProducsByCategoryIdsAndkeyword(@Param("categoryIds")List<Integer> ids,
                                                       @Param("keyword")String keyword);
 
+    /**
+     * 商品扣库存接口
+     * */
+    int  reduceStock(@Param("productId")Integer productId,@Param("stock") Integer stock);
 }

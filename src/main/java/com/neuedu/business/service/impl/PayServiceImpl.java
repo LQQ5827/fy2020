@@ -1,10 +1,22 @@
-package com.alipay.demo.trade;
+package com.neuedu.business.service.impl;
 
+import com.neuedu.business.common.Consts;
+import com.neuedu.business.common.ServerResponse;
+import com.neuedu.business.common.StatusEnum;
+import com.neuedu.business.dao.PayInfoMapper;
+import com.neuedu.business.pojo.PayInfo;
+import com.neuedu.business.service.IOrderService;
+import com.neuedu.business.service.IpayService;
+import com.neuedu.business.vo.OrderItemVO;
+import com.neuedu.business.vo.OrderVO;
+import org.springframework.stereotype.Service;
 import com.alipay.api.AlipayResponse;
 import com.alipay.api.domain.TradeFundBill;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
 import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.alipay.api.response.MonitorHeartbeatSynResponse;
+import com.alipay.demo.trade.DemoHbRunner;
+import com.alipay.demo.trade.Main;
 import com.alipay.demo.trade.config.Configs;
 import com.alipay.demo.trade.model.ExtendParams;
 import com.alipay.demo.trade.model.GoodsDetail;
@@ -24,19 +36,27 @@ import com.alipay.demo.trade.utils.ZxingUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 /**
- * Created by liuyangkly on 15/8/9.
- * 简单main函数，用于测试当面付api
- * sdk和demo的意见和问题反馈请联系：liuyang.kly@alipay.com
+ * @类 名： PayServiceImpl <br/>
+ * @描 述： <br/>
+ * @日 期： 2020/3/11 23:24<br/>
+ * @作 者： 鼠小倩<br/>
+ * @版 本： 1.0.0
+ * @since JDK 1.8
  */
-public class Main {
-    private static Log                  log = LogFactory.getLog(Main.class);
+@Service
+public class PayServiceImpl implements IpayService {
+
+    private static Log log = LogFactory.getLog(Main.class);
 
     // 支付宝当面付2.0服务
-    private static AlipayTradeService   tradeService;
+    private static AlipayTradeService tradeService;
 
     // 支付宝当面付2.0服务（集成了交易保障接口逻辑）
     private static AlipayTradeService   tradeWithHBService;
@@ -60,8 +80,8 @@ public class Main {
 
         /** 如果需要在程序中覆盖Configs提供的默认参数, 可以使用ClientBuilder类的setXXX方法修改默认参数 否则使用代码中的默认设置 */
         monitorService = new AlipayMonitorServiceImpl.ClientBuilder()
-            .setGatewayUrl("http://mcloudmonitor.com/gateway.do").setCharset("GBK")
-            .setFormat("json").build();
+                .setGatewayUrl("http://mcloudmonitor.com/gateway.do").setCharset("GBK")
+                .setFormat("json").build();
     }
 
     // 简单打印应答
@@ -70,36 +90,12 @@ public class Main {
             log.info(String.format("code:%s, msg:%s", response.getCode(), response.getMsg()));
             if (StringUtils.isNotEmpty(response.getSubCode())) {
                 log.info(String.format("subCode:%s, subMsg:%s", response.getSubCode(),
-                    response.getSubMsg()));
+                        response.getSubMsg()));
             }
             log.info("body:" + response.getBody());
         }
     }
 
-    public static void main(String[] args) {
-        Main main = new Main();
-
-        // 系统商商测试交易保障接口api
-        //        main.test_monitor_sys();
-
-        // POS厂商测试交易保障接口api
-        //        main.test_monitor_pos();
-
-        // 测试交易保障接口调度
-        //        main.test_monitor_schedule_logic();
-
-        // 测试当面付2.0支付（使用未集成交易保障接口的当面付2.0服务）
-        //        main.test_trade_pay(tradeService);
-
-        // 测试查询当面付2.0交易
-        //        main.test_trade_query();
-
-        // 测试当面付2.0退货
-        //        main.test_trade_refund();
-
-        // 测试当面付2.0生成支付二维码
-        main.test_trade_precreate();
-    }
 
     // 测试系统商交易保障调度
     public void test_monitor_schedule_logic() {
@@ -143,14 +139,14 @@ public class Main {
         String appAuthToken = "应用授权令牌";//根据真实值填写
 
         AlipayHeartbeatSynRequestBuilder builder = new AlipayHeartbeatSynRequestBuilder()
-            .setAppAuthToken(appAuthToken).setProduct(Product.FP).setType(Type.CR)
-            .setEquipmentId("cr1000001").setEquipmentStatus(EquipStatus.NORMAL)
-            .setTime(Utils.toDate(new Date())).setStoreId("store10001").setMac("0a:00:27:00:00:00")
-            .setNetworkType("LAN").setProviderId("2088911212323549") // 设置系统商pid
-            .setSysTradeInfoList(sysTradeInfoList) // 系统商同步trade_info信息
-            //                .setExceptionInfoList(exceptionInfoList)  // 填写异常信息，如果有的话
-            .setExtendInfo(extendInfo) // 填写扩展信息，如果有的话
-        ;
+                .setAppAuthToken(appAuthToken).setProduct(Product.FP).setType(Type.CR)
+                .setEquipmentId("cr1000001").setEquipmentStatus(EquipStatus.NORMAL)
+                .setTime(Utils.toDate(new Date())).setStoreId("store10001").setMac("0a:00:27:00:00:00")
+                .setNetworkType("LAN").setProviderId("2088911212323549") // 设置系统商pid
+                .setSysTradeInfoList(sysTradeInfoList) // 系统商同步trade_info信息
+                //                .setExceptionInfoList(exceptionInfoList)  // 填写异常信息，如果有的话
+                .setExtendInfo(extendInfo) // 填写扩展信息，如果有的话
+                ;
 
         MonitorHeartbeatSynResponse response = monitorService.heartbeatSyn(builder);
         dumpResponse(response);
@@ -175,21 +171,21 @@ public class Main {
         //        extendInfo.put("TERMINAL_ID", "1234");
 
         AlipayHeartbeatSynRequestBuilder builder = new AlipayHeartbeatSynRequestBuilder()
-            .setProduct(Product.FP)
-            .setType(Type.SOFT_POS)
-            .setEquipmentId("soft100001")
-            .setEquipmentStatus(EquipStatus.NORMAL)
-            .setTime("2015-09-28 11:14:49")
-            .setManufacturerPid("2088000000000009")
-            // 填写机具商的支付宝pid
-            .setStoreId("store200001").setEquipmentPosition("31.2433190000,121.5090750000")
-            .setBbsPosition("2869719733-065|2896507033-091").setNetworkStatus("gggbbbgggnnn")
-            .setNetworkType("3G").setBattery("98").setWifiMac("0a:00:27:00:00:00")
-            .setWifiName("test_wifi_name").setIp("192.168.1.188")
-            .setPosTradeInfoList(posTradeInfoList) // POS厂商同步trade_info信息
-            //                .setExceptionInfoList(exceptionInfoList) // 填写异常信息，如果有的话
-            .setExtendInfo(extendInfo) // 填写扩展信息，如果有的话
-        ;
+                .setProduct(Product.FP)
+                .setType(Type.SOFT_POS)
+                .setEquipmentId("soft100001")
+                .setEquipmentStatus(EquipStatus.NORMAL)
+                .setTime("2015-09-28 11:14:49")
+                .setManufacturerPid("2088000000000009")
+                // 填写机具商的支付宝pid
+                .setStoreId("store200001").setEquipmentPosition("31.2433190000,121.5090750000")
+                .setBbsPosition("2869719733-065|2896507033-091").setNetworkStatus("gggbbbgggnnn")
+                .setNetworkType("3G").setBattery("98").setWifiMac("0a:00:27:00:00:00")
+                .setWifiName("test_wifi_name").setIp("192.168.1.188")
+                .setPosTradeInfoList(posTradeInfoList) // POS厂商同步trade_info信息
+                //                .setExceptionInfoList(exceptionInfoList) // 填写异常信息，如果有的话
+                .setExtendInfo(extendInfo) // 填写扩展信息，如果有的话
+                ;
 
         MonitorHeartbeatSynResponse response = monitorService.heartbeatSyn(builder);
         dumpResponse(response);
@@ -200,7 +196,7 @@ public class Main {
         // (必填) 商户网站订单系统中唯一订单号，64个字符以内，只能包含字母、数字、下划线，
         // 需保证商户系统端不能重复，建议通过数据库sequence生成，
         String outTradeNo = "tradepay" + System.currentTimeMillis()
-                            + (long) (Math.random() * 10000000L);
+                + (long) (Math.random() * 10000000L);
 
         // (必填) 订单标题，粗略描述用户的支付目的。如“xxx品牌xxx门店消费”
         String subject = "xxx品牌xxx门店当面付消费";
@@ -255,12 +251,12 @@ public class Main {
 
         // 创建条码支付请求builder，设置请求参数
         AlipayTradePayRequestBuilder builder = new AlipayTradePayRequestBuilder()
-            //            .setAppAuthToken(appAuthToken)
-            .setOutTradeNo(outTradeNo).setSubject(subject).setAuthCode(authCode)
-            .setTotalAmount(totalAmount).setStoreId(storeId)
-            .setUndiscountableAmount(undiscountableAmount).setBody(body).setOperatorId(operatorId)
-            .setExtendParams(extendParams).setSellerId(sellerId)
-            .setGoodsDetailList(goodsDetailList).setTimeoutExpress(timeoutExpress);
+                //            .setAppAuthToken(appAuthToken)
+                .setOutTradeNo(outTradeNo).setSubject(subject).setAuthCode(authCode)
+                .setTotalAmount(totalAmount).setStoreId(storeId)
+                .setUndiscountableAmount(undiscountableAmount).setBody(body).setOperatorId(operatorId)
+                .setExtendParams(extendParams).setSellerId(sellerId)
+                .setGoodsDetailList(goodsDetailList).setTimeoutExpress(timeoutExpress);
 
         // 调用tradePay方法获取当面付应答
         AlipayF2FPayResult result = service.tradePay(builder);
@@ -290,7 +286,7 @@ public class Main {
 
         // 创建查询请求builder，设置请求参数
         AlipayTradeQueryRequestBuilder builder = new AlipayTradeQueryRequestBuilder()
-            .setOutTradeNo(outTradeNo);
+                .setOutTradeNo(outTradeNo);
 
         AlipayF2FQueryResult result = tradeService.queryTradeResult(builder);
         switch (result.getTradeStatus()) {
@@ -342,8 +338,8 @@ public class Main {
 
         // 创建退款请求builder，设置请求参数
         AlipayTradeRefundRequestBuilder builder = new AlipayTradeRefundRequestBuilder()
-            .setOutTradeNo(outTradeNo).setRefundAmount(refundAmount).setRefundReason(refundReason)
-            .setOutRequestNo(outRequestNo).setStoreId(storeId);
+                .setOutTradeNo(outTradeNo).setRefundAmount(refundAmount).setRefundReason(refundReason)
+                .setOutRequestNo(outRequestNo).setStoreId(storeId);
 
         AlipayF2FRefundResult result = tradeService.tradeRefund(builder);
         switch (result.getTradeStatus()) {
@@ -366,18 +362,17 @@ public class Main {
     }
 
     // 测试当面付2.0生成支付二维码
-    public void test_trade_precreate() {
+    public ServerResponse trade_precreate(OrderVO orderVO) {
         // (必填) 商户网站订单系统中唯一订单号，64个字符以内，只能包含字母、数字、下划线，
         // 需保证商户系统端不能重复，建议通过数据库sequence生成，
-        String outTradeNo = "tradeprecreate" + System.currentTimeMillis()
-                            + (long) (Math.random() * 10000000L);
+        String outTradeNo = String.valueOf(orderVO.getOrderNo());
 
         // (必填) 订单标题，粗略描述用户的支付目的。如“xxx品牌xxx门店当面付扫码消费”
-        String subject = "xxx品牌xxx门店当面付扫码消费";
+        String subject = "电商平台支付订单";
 
         // (必填) 订单总金额，单位为元，不能超过1亿元
         // 如果同时传入了【打折金额】,【不可打折金额】,【订单总金额】三者,则必须满足如下条件:【订单总金额】=【打折金额】+【不可打折金额】
-        String totalAmount = "0.01";
+        String totalAmount = String.valueOf(orderVO.getPayment().doubleValue());
 
         // (可选) 订单不可打折金额，可以配合商家平台配置折扣活动，如果酒水不参与打折，则将对应金额填写至此字段
         // 如果该值未传入,但传入了【订单总金额】,【打折金额】,则该值默认为【订单总金额】-【打折金额】
@@ -388,7 +383,7 @@ public class Main {
         String sellerId = "";
 
         // 订单描述，可以对交易或商品进行一个详细地描述，比如填写"购买商品2件共15.00元"
-        String body = "购买商品3件共20.00元";
+        String body = "购买商品"+orderVO.getOrderItemVOList().size()+"件共"+orderVO.getPayment()+"元";
 
         // 商户操作员编号，添加此参数可以为商户操作员做销售统计
         String operatorId = "test_operator_id";
@@ -405,24 +400,29 @@ public class Main {
 
         // 商品明细列表，需填写购买商品详细信息，
         List<GoodsDetail> goodsDetailList = new ArrayList<GoodsDetail>();
-        // 创建一个商品信息，参数含义分别为商品id（使用国标）、名称、单价（单位为分）、数量，如果需要添加商品类别，详见GoodsDetail
-        GoodsDetail goods1 = GoodsDetail.newInstance("goods_id001", "xxx小面包", 1000, 1);
-        // 创建好一个商品后添加至商品明细列表
-        goodsDetailList.add(goods1);
 
-        // 继续创建并添加第一条商品信息，用户购买的产品为“黑人牙刷”，单价为5.00元，购买了两件
-        GoodsDetail goods2 = GoodsDetail.newInstance("goods_id002", "xxx牙刷", 500, 2);
-        goodsDetailList.add(goods2);
+        List<OrderItemVO> orderItemVOList=orderVO.getOrderItemVOList();
+        for(OrderItemVO orderItemVO:orderItemVOList){
+
+            // 创建一个商品信息，参数含义分别为商品id（使用国标）、名称、单价（单位为分）、数量，如果需要添加商品类别，详见GoodsDetail
+            GoodsDetail goods1 = GoodsDetail.newInstance(String.valueOf(orderItemVO.getProductId()),
+                    orderItemVO.getProductName(),
+                    orderItemVO.getCurrentUnitPrice().longValue(),
+                    orderItemVO.getQuantity());
+            // 创建好一个商品后添加至商品明细列表
+            goodsDetailList.add(goods1);
+        }
+
+
 
         // 创建扫码支付请求builder，设置请求参数
         AlipayTradePrecreateRequestBuilder builder = new AlipayTradePrecreateRequestBuilder()
-            .setSubject(subject).setTotalAmount(totalAmount).setOutTradeNo(outTradeNo)
-            .setUndiscountableAmount(undiscountableAmount).setSellerId(sellerId).setBody(body)
-            .setOperatorId(operatorId).setStoreId(storeId).setExtendParams(extendParams)
-            .setTimeoutExpress(timeoutExpress)
-            //                .setNotifyUrl("http://www.test-notify-url.com")//支付宝服务器主动通知商户服务器里指定的页面http路径,根据需要设置
-            .setGoodsDetailList(goodsDetailList);
-
+                .setSubject(subject).setTotalAmount(totalAmount).setOutTradeNo(outTradeNo)
+                .setUndiscountableAmount(undiscountableAmount).setSellerId(sellerId).setBody(body)
+                .setOperatorId(operatorId).setStoreId(storeId).setExtendParams(extendParams)
+                .setTimeoutExpress(timeoutExpress)
+                .setNotifyUrl(callbackurl)//支付宝服务器主动通知商户服务器里指定的页面http路径,根据需要设置
+                .setGoodsDetailList(goodsDetailList);
         AlipayF2FPrecreateResult result = tradeService.tradePrecreate(builder);
         switch (result.getTradeStatus()) {
             case SUCCESS:
@@ -432,15 +432,16 @@ public class Main {
                 dumpResponse(response);
 
                 // 需要修改为运行机器上的路径
-                String filePath = String.format("E:\\Neuedu\\Neusoft Practice\\neuedu.idea\\支付宝模块资源文件\\picture\\qr-%s.png",
-                    response.getOutTradeNo());
+                String filePath = String.format(qrcodePath+"qr-%s.png",
+                        response.getOutTradeNo());
                 log.info("filePath:" + filePath);
                 ZxingUtils.getQRCodeImge(response.getQrCode(), 256, filePath);
-                break;
+
+                return ServerResponse.serverResponseBySuccess(null,null);
 
             case FAILED:
                 log.error("支付宝预下单失败!!!");
-                break;
+                return ServerResponse.serverResponseByFail(StatusEnum.ALIPAY_ORDER_FAIL.getStatus(),StatusEnum.ALIPAY_ORDER_FAIL.getDesc());
 
             case UNKNOWN:
                 log.error("系统异常，预下单状态未知!!!");
@@ -450,5 +451,89 @@ public class Main {
                 log.error("不支持的交易状态，交易返回异常!!!");
                 break;
         }
+        return ServerResponse.serverResponseByFail(StatusEnum.ALIPAY_ORDER_FAIL.getStatus(),StatusEnum.ALIPAY_ORDER_FAIL.getDesc());
+    }
+
+    @Autowired
+    IOrderService orderService;
+
+    @Value("${alipay.callback.url}")
+    String callbackurl;
+    @Value("${alipay.qrcode.path}")
+    String qrcodePath;
+    @Autowired
+    PayInfoMapper payInfoMapper;
+    @Override
+    public ServerResponse pay(Long orderNo) {
+
+        //step1:参数非空判断
+        if(orderNo==null){
+            return ServerResponse.serverResponseByFail(StatusEnum.PARAM_NOT_EMPTY.getStatus(),StatusEnum.PARAM_NOT_EMPTY.getDesc());
+        }
+
+        //step2: 根据orderNo查询订单，返回serverResponse
+        ServerResponse<OrderVO> serverResponse=orderService.findOrderByOrderNo(orderNo);
+        //step3：判断serverResponse是否成功，没有成功的话直接返回
+        if(!serverResponse.isSucess()){
+            return serverResponse;
+        }
+        //step4：当返回serverResponse成功时，通过serverResponse的getData()方法拿到orderVO
+        OrderVO orderVO=serverResponse.getData();
+        //step5：通过orderVO进行支付，调用trade_precreate生成二维码的方法
+        return trade_precreate(orderVO);
+    }
+
+    /**
+     * 回调接口
+     * @param signParam
+     * @return
+     */
+    @Override
+    public String callbackLogic(Map<String, String> signParam) {
+        //step1:获取商家的订单号
+        Long orderNo=Long.parseLong(signParam.get("out_trade_no"));
+        //step2:根据订单号查询订单
+        ServerResponse<OrderVO> serverResponse=orderService.findOrderByOrderNo(orderNo);
+        if(!serverResponse.isSucess()){
+            return "fail";
+        }
+        OrderVO orderVO= serverResponse.getData();
+
+        if(orderVO.getStatus()>= Consts.OrderStatusEnum.PAYED.getStatus()){
+            //支付宝回调接口已经修改过订单状态了
+            return "success";
+        }
+
+        //step3:修改订单状态
+        String tradeStatus=signParam.get("trade_status");
+        if(tradeStatus.equals("TRADE_SUCCESS")){//订单支付成功
+            //修改订单状态、修改订单支付时间
+
+            ServerResponse serverResponse1=orderService.updateOrder(orderNo,signParam.get("gmt_payment"),20);
+
+            if(!serverResponse1.isSucess()){
+                return "fail";
+            }
+        }
+
+        //step4:支付信息插入支付表
+        PayInfo payInfo=new PayInfo();
+
+        payInfo.setUserId(orderVO.getUserId());
+        payInfo.setPlatformNumber(signParam.get("trade_no"));
+        payInfo.setPayPlatform(1);
+        payInfo.setOrderNo(orderVO.getOrderNo());
+        payInfo.setPlatformStatus(signParam.get("trade_status"));
+
+        int count=payInfoMapper.insert(payInfo);
+
+        if(count<=0){
+            return "fail";
+        }
+
+        return "success";
     }
 }
+
+
+

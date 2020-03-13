@@ -43,6 +43,31 @@ public enum StatusEnum {
 
     PRODUCT_NOT_EXISTS(25,"商品不存在"),
 
+    ADDRESS_NOT_EMPYT(26,"收货地址不能为空"),
+
+
+    USER_CART_EMPTY(27,"用户购物车为空"),
+    PRODUCT_STOCK_NOT_FULL(28,"商品库存不足"),
+
+    ORDER_CREATE_FAIL(29,"订单创建失败"),
+    ORDER_ITEM_CREATE_FAIL(30,"订单明细创建失败"),
+    REDUCE_STOCK_FAIL(31,"商品扣库存失败"),
+    CART_CLEAN_FAIL(32,"购物车清空失败"),
+    ORDER_NOT_EXISTS(33,"订单不存在"),
+    ORDER_NOT_CANCEL(34,"订单无法取消"),
+    ORDER_CANCEL_FAIL(35,"订单取消失败"),
+    ADDRESS_ADD_FAIL(36,"地址添加失败"),
+
+    ALIPAY_ORDER_FAIL(37,"支付宝预下单失败"),
+    ORDER_STATUS_FAIL(38,"订单状态修改失败"),
+
+    TOKEN_GENERATE_FAIL(39,"token获取失败"),
+
+    TOKEN_EMPTY(40,"没有携带token"),
+    NOT_REPEATABLE(41,"不能重复提交"),
+
+    FILE_UPLOAD_FTPSERVER_FAIL(42,"上传到ftp服务器失败"),
+
     ; //注意这块的分号
 
     private int status;//状态码值

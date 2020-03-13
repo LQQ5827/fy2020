@@ -20,3 +20,12 @@ mybatis:
 
 upload:
   path: E:\Neuedu\Neusoft Practice\neuedu.idea\picture
+
+alipay:
+  callback:
+    url: http://4xq7g9.natappfree.cc/order/alipay_callback.do
+  qrcode:
+    path: E:\Neuedu\Neusoft Practice\neuedu.idea\支付宝模块资源文件\picture\
+  public:
+    key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi+67aaNkFj3IAx2OjGixLvNPGkuAFg0iZrUTRbGTAvUeENFi5DHAeMN/8g9o7lrsE6A1WvxTwhpkNMhIr+QvHJnL4bwGsD8FSIi8FMSNRpcXgHolzzKab2oo+PqznvYzyBiUQOMSpbh7NGa8zT60iT0uvZXr0ZJPmfXkR01MwbZIxl/JuzhcpEGc/fN6noZoEthUZ/GY1SMuScd0ENSRjlOm2s1DHyv+G31IxSYFartsKD4pikFIpcK/NdkAh0ruh8yomvlDxUQ4kRd8OwLqd7wExEcBn+EpT4Zu5pMc2ozxCqOgOpGoHJY6h35FMntsRP/pQW491uYmg0jERwfErwIDAQAB
+

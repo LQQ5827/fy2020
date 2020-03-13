@@ -4,6 +4,7 @@ import com.neuedu.business.common.Consts;
 import com.neuedu.business.common.ServerResponse;
 import com.neuedu.business.common.StatusEnum;
 import com.neuedu.business.dao.CartMapper;
+import com.neuedu.business.exception.BusinessException;
 import com.neuedu.business.pojo.Cart;
 import com.neuedu.business.service.ICartService;
 import com.neuedu.business.service.IProductService;
@@ -89,6 +90,30 @@ public class CartServiceImpl implements ICartService {
             }
 
         }
+    }
+
+    @Override
+    public ServerResponse findCartByUserIdAndChecked(Integer userId) {
+        if(userId==null){
+            return ServerResponse.serverResponseByFail(StatusEnum.NO_LOGIN.getStatus(),StatusEnum.NO_LOGIN.getDesc());
+        }
+        List<Cart> cartList= cartMapper.findCartByUseridAndChecked(userId);
+        return ServerResponse.serverResponseBySuccess(null,cartList);
+    }
+
+
+    @Override
+    public ServerResponse deleteBatchByIds(List<Cart> cartList) {
+        if(cartList==null|| cartList.size()==0){
+            return ServerResponse.serverResponseByFail(StatusEnum.PARAM_NOT_EMPTY.getStatus(),StatusEnum.PARAM_NOT_EMPTY.getDesc());
+        }
+
+        int count=cartMapper.deleteBatch(cartList);
+        if(count!=cartList.size()){
+            throw new BusinessException(StatusEnum.CART_CLEAN_FAIL.getStatus(),StatusEnum.CART_CLEAN_FAIL.getDesc());
+        }
+
+        return ServerResponse.serverResponseBySuccess();
     }
 
     private CartVO getCartVO(Integer userId){
